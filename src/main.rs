@@ -11,14 +11,36 @@ async fn main() -> std::io::Result<()> {
 
     let environment = Environment::new();
     let database = Database::new(&environment);
-    let appdata = AppData::new(database, environment);
 
+    println!("Checking database...");
+    let check_db_result = database.check_db(&environment);
+    if check_db_result.is_err() {
+        eprintln!("Something went wrong checking the database! Exiting.");
+        std::process::exit(1);
+    }
+
+    if !check_db_result.unwrap() {
+        println!("Database did not pass the check. Attempting to correct...");
+        let init_db_result = database.init_db(&environment);
+        if init_db_result.is_err() {
+            println!("Something went wrong initializing the database! Exiting.");
+            std::process::exit(1);
+        } else {
+            println!("Database initialized.");
+        }
+    } else {
+        println!("Database passed the check.");
+    }
+
+    let appdata = AppData::new(database, environment);
     println!("Startup complete. Listening on 0.0.0.0:8080");
 
     //Start the Actix HTTP server
     HttpServer::new(move || {
         App::new()
             .data(appdata.clone())
+            .service(endpoints::auth::login::post_login)
+            .service(endpoints::auth::register::post_register)
     })
     .bind("0.0.0.0:8080")?
     .run()

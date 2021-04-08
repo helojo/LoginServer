@@ -1,6 +1,10 @@
 use std::path::PathBuf;
 use std::io::Write;
 use serde::{Deserialize, Serialize};
+use rand::Rng;
+use mysql::prelude::Queryable;
+use mysql::{Row, Params, params};
+use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct AppData {
@@ -13,7 +17,9 @@ pub struct Environment {
     pub mysql_host:     String,
     pub mysql_database: String,
     pub mysql_username: String,
-    pub mysql_password: String
+    pub mysql_password: String,
+
+    pub password_pepper:  String
 }
 
 #[derive(Clone)]
@@ -73,7 +79,7 @@ impl Environment {
 
         //Check if the config file and folder exists
         if !config_path.as_path().exists() {
-            //Convert the path to str and split it on the OS's path seperator
+            //Convert the path to str and split it on the OS's path separator
             let path_as_str = config_path.as_path().to_str().unwrap();
             let path_parts: Vec<&str> = path_as_str.split(std::path::MAIN_SEPARATOR).collect();
 
@@ -96,7 +102,8 @@ impl Environment {
                 mysql_host: "YOUR_MYSQL_HOST".to_string(),
                 mysql_database: "YOUR MYSQL_DATABASE".to_string(),
                 mysql_username: "YOUR MYSQL_USERNAME".to_string(),
-                mysql_password: "YOUR_MYSQL_PASSWORD".to_string()
+                mysql_password: "YOUR_MYSQL_PASSWORD".to_string(),
+                password_pepper: rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(64).map(char::from).collect()
             };
 
             //Serialize to a String
@@ -161,11 +168,17 @@ impl Environment {
             Self::env_variable_not_set("MYSQL_PASSWORD");
         }
 
+        let password_pepper = var("PASSWORD_PEPPER");
+        if password_pepper.is_err() {
+            Self::env_variable_not_set("PASSWORD_PEPPER");
+        }
+
         Environment {
             mysql_host:         mysql_host.unwrap(),
             mysql_database:     mysql_database.unwrap(),
             mysql_username:     mysql_username.unwrap(),
-            mysql_password:     mysql_password.unwrap()
+            mysql_password:     mysql_password.unwrap(),
+            password_pepper:    password_pepper.unwrap()
         }
     }
 
@@ -194,5 +207,72 @@ impl Database {
         Database {
             pool: pool.unwrap()
         }
+    }
+
+    pub fn check_db(&self, environment: &Environment) -> Result<bool, ()> {
+        let conn_wrapped = self.pool.get_conn();
+        if conn_wrapped.is_err() {
+            eprintln!("An error occurred: {:?}", conn_wrapped.err().unwrap());
+            return Err(());
+        }
+        let mut conn = conn_wrapped.unwrap();
+
+        let sql_fetch_tables_wrapped = conn.exec::<Row, &str, Params>("SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = :table_schema", params! {
+            "table_schema" => environment.mysql_database.clone()
+        });
+
+        if sql_fetch_tables_wrapped.is_err() {
+            eprintln!("An error occurred: {:?}", sql_fetch_tables_wrapped.unwrap());
+            return Err(());
+        }
+
+        let sql_fetch_tables = sql_fetch_tables_wrapped.unwrap();
+        let mut required_tables_map = HashMap::new();
+        required_tables_map.insert("users".to_string(), false);
+        required_tables_map.insert("sessions".to_string(), false);
+
+        for row in sql_fetch_tables {
+            let table_name = row.get::<String, &str>("table_name").unwrap();
+            required_tables_map.insert(table_name.clone(), true);
+        }
+
+        let mut db_passed = true;
+        for entry in required_tables_map.iter() {
+            if *entry.1 == false {
+                eprintln!("Missing table: '{}'", entry.0);
+                db_passed = false;
+            }
+        }
+        Ok(db_passed)
+    }
+
+    pub fn init_db(&self, environment: &Environment) -> Result<(), ()> {
+        //Create a connection
+        let conn_wrapped = self.pool.get_conn();
+        if conn_wrapped.is_err() {
+            eprintln!("An error occurred: {:?}", conn_wrapped.err().unwrap());
+            return Err(());
+        }
+        let mut conn = conn_wrapped.unwrap();
+
+        //Create 'sessions' table
+        let sql_create_sessions_table = conn.query::<usize, &str>(format!("CREATE TABLE `{}`.`sessions` ( `session_id` VARCHAR(64) NOT NULL , `user_id` VARCHAR(64) NOT NULL , `expiry` BIGINT NOT NULL , PRIMARY KEY (`session_id`)) ENGINE = InnoDB;", environment.mysql_database.clone()).as_str());
+
+        if sql_create_sessions_table.is_err() {
+            eprintln!("An error occurred: {:?}", sql_create_sessions_table.err().unwrap());
+            return Err(());
+        }
+        println!("Created table 'sessions'");
+
+        //Create 'users' table
+        let sql_create_users_table = conn.query::<usize, &str>(format!("CREATE TABLE `{}`.`users` ( `user_id` VARCHAR(64) NOT NULL , `email` VARCHAR(255) NOT NULL , `password` VARCHAR(255) NOT NULL , `salt` VARCHAR(16) NOT NULL , PRIMARY KEY (`user_id`)) ENGINE = InnoDB;", environment.mysql_database.clone()).as_str());
+
+        if sql_create_users_table.is_err() {
+            eprintln!("An error occurred: {:?}", sql_create_users_table.err().unwrap());
+            return Err(());
+        }
+        println!("Created table 'users'.");
+
+        Ok(())
     }
 }
