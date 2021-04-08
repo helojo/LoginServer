@@ -1,0 +1,27 @@
+kind: pipeline
+type: kubernetes
+name: TwinsightContentDashboard-API
+service_account: drone-runner
+
+triggers:
+  event:
+  - tag
+
+steps:
+- name: Build Docker image
+  image: plugins/docker
+  settings:
+    repo: registry.thedutchmc.nl/twinsight-content-dashboard-api
+    tags:
+    - latest
+    - ${DRONE_TAG}
+    registry: registry.thedutchmc.nl
+
+- name: Slack notifications
+  image: plugins/slack
+  settings:
+    webhook:
+      from_secret: discord_webhook
+    username: Drone CI/CD - TwinsightContentDashboard API
+  when:
+    status: [ success, failure ]
