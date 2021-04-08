@@ -58,12 +58,12 @@ pub async fn post_register(data: web::Data<AppData>, form: web::Form<RegisterFor
 
     let mut conn = conn_wrapped.unwrap();
 
-    let sql_check_email_wrapped = conn.exec::<Row, &str, Params>("SELECT COUNT(1) FROM users WHERE email = :email", params! {
+    let sql_check_email_wrapped = conn.exec::<Row, &str, Params>("SELECT 1 FROM users WHERE email = :email", params! {
         "email" => email.clone()
     });
 
     if sql_check_email_wrapped.is_err() {
-        eprintln!("An error occurred: {:?}", sql_check_email_wrapped.err().unwrap());
+        eprintln!("An error occurred (register.rs): {:?}", sql_check_email_wrapped.err().unwrap());
         return HttpResponse::InternalServerError().finish();
     }
 
@@ -87,7 +87,7 @@ pub async fn post_register(data: web::Data<AppData>, form: web::Form<RegisterFor
     let session_id: String = rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(64).map(char::from).collect();
     let user_id: String = rand::thread_rng().sample_iter(&rand::distributions::Alphanumeric).take(64).map(char::from).collect();
 
-    let sql_insert_user = conn.exec::<usize, &str, Params>("INSERT INTO users (user_id, email, password, salt) VALUES (:user_id, :email, :password, :salt", params! {
+    let sql_insert_user = conn.exec::<usize, &str, Params>("INSERT INTO users (user_id, email, password, salt) VALUES (:user_id, :email, :password, :salt)", params! {
         "user_id" => user_id.clone(),
         "email" => email,
         "password" => password_finalized,
@@ -95,7 +95,7 @@ pub async fn post_register(data: web::Data<AppData>, form: web::Form<RegisterFor
     });
 
     if sql_insert_user.is_err() {
-        eprintln!("An error occurred: {:?}", sql_insert_user.err().unwrap());
+        eprintln!("An error occurred (register.rs): {:?}", sql_insert_user.err().unwrap());
         return HttpResponse::InternalServerError().finish();
     }
 
@@ -108,7 +108,7 @@ pub async fn post_register(data: web::Data<AppData>, form: web::Form<RegisterFor
     });
 
     if sql_insert_session_id.is_err() {
-        eprintln!("An error occurred: {:?}", sql_insert_session_id.err().unwrap());
+        eprintln!("An error occurred (register.rs): {:?}", sql_insert_session_id.err().unwrap());
         return HttpResponse::InternalServerError().finish();
     }
 

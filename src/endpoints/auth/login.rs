@@ -39,7 +39,7 @@ pub async fn post_login(data: web::Data<AppData>, form: web::Form<LoginForm>) ->
 
     let conn_wrapped = data.database.pool.get_conn();
     if conn_wrapped.is_err() {
-        eprintln!("An error occurred: {:?}", conn_wrapped.err().unwrap());
+        eprintln!("An error occurred (login.rs): {:?}", conn_wrapped.err().unwrap());
         return HttpResponse::InternalServerError().finish();
     }
     let mut conn = conn_wrapped.unwrap();
@@ -49,7 +49,7 @@ pub async fn post_login(data: web::Data<AppData>, form: web::Form<LoginForm>) ->
     });
 
     if sql_fetch_user_wrapped.is_err() {
-        eprintln!("An error occurred: {:?}", sql_fetch_user_wrapped.err().unwrap());
+        eprintln!("An error occurred (login.rs): {:?}", sql_fetch_user_wrapped.err().unwrap());
         return HttpResponse::InternalServerError().finish();
     }
 
@@ -100,7 +100,7 @@ pub async fn post_login(data: web::Data<AppData>, form: web::Form<LoginForm>) ->
     });
 
     if sql_write_session_id.is_err() {
-        eprintln!("An error occurred: {:?}", sql_write_session_id.err().unwrap());
+        eprintln!("An error occurred (login.rs): {:?}", sql_write_session_id.err().unwrap());
         return HttpResponse::InternalServerError().finish();
     }
 

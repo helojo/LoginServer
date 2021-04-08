@@ -15,7 +15,7 @@ async fn main() -> std::io::Result<()> {
     println!("Checking database...");
     let check_db_result = database.check_db(&environment);
     if check_db_result.is_err() {
-        eprintln!("Something went wrong checking the database! Exiting.");
+        eprintln!("Something went wrong checking the database (main.rs)! Exiting.");
         std::process::exit(1);
     }
 
@@ -23,7 +23,7 @@ async fn main() -> std::io::Result<()> {
         println!("Database did not pass the check. Attempting to correct...");
         let init_db_result = database.init_db(&environment);
         if init_db_result.is_err() {
-            println!("Something went wrong initializing the database! Exiting.");
+            println!("Something went wrong initializing the database (main.rs)! Exiting.");
             std::process::exit(1);
         } else {
             println!("Database initialized.");

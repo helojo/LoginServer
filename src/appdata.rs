@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 use std::io::Write;
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use rand::Rng;
 use mysql::prelude::Queryable;
 use mysql::{Row, Params, params};
-use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct AppData {
@@ -66,7 +66,7 @@ impl Environment {
                 eprintln!("Warning! This platform is not officially supported. Your configuration file will be placed in the same directory as where the application's executable is located.");
                 let curr_exe_path = std::env::current_exe();
                 if curr_exe_path.is_err() {
-                    eprintln!("Something went from fetching the executable's path. Exiting");
+                    eprintln!("Something went from fetching the executable's path (appdata.rs): {:?}. Exiting", curr_exe_path.err());
                     std::process::exit(1);
                 }
 
@@ -93,7 +93,7 @@ impl Environment {
             //Create the configuration folder
             let dir_create_operation = std::fs::create_dir_all(folder_parts.as_path());
             if dir_create_operation.is_err() {
-                println!("An error occurred while creating the configuration file directory: {:?}", dir_create_operation.err());
+                println!("An error occurred while creating the configuration file directory (appdata.rs): {:?}", dir_create_operation.err());
                 std::process::exit(1);
             }
 
@@ -112,14 +112,14 @@ impl Environment {
             //Create the configuration file
             let config_file = std::fs::File::create(config_path.as_path());
             if config_file.is_err() {
-                eprintln!("An error occurred while creating the configuration file: {:?}", config_file.err());
+                eprintln!("An error occurred while creating the configuration file (appdata.rs): {:?}", config_file.err());
                 std::process::exit(1);
             }
 
             //Write the example content to the configuration file
             let write_operation = config_file.unwrap().write_all(example_config_as_str.as_bytes());
             if write_operation.is_err() {
-                eprintln!("An error occurred while creating the configuration file:{:?}", write_operation.is_err());
+                eprintln!("An error occurred while creating the configuration file (appdata.rs): {:?}", write_operation.is_err());
                 std::process::exit(1)
             }
 
@@ -131,14 +131,14 @@ impl Environment {
         //Read the configuration file to a String
         let config_file_content = std::fs::read_to_string(config_path.as_path());
         if config_file_content.is_err() {
-            eprintln!("Unable to read configuration file: {:?}", config_file_content.err());
+            eprintln!("Unable to read configuration file (appdata.rs): {:?}", config_file_content.err());
             std::process::exit(1);
         }
 
         //Deserialize the configuration file content
         let environment: serde_yaml::Result<Environment> = serde_yaml::from_str(&config_file_content.unwrap());
         if environment.is_err() {
-            eprintln!("Something went wrong deserializing the configuration file content: {:?}", environment.err());
+            eprintln!("Something went wrong deserializing the configuration file content (appdata.rs): {:?}", environment.err());
             std::process::exit(1);
         }
 
@@ -212,7 +212,7 @@ impl Database {
     pub fn check_db(&self, environment: &Environment) -> Result<bool, ()> {
         let conn_wrapped = self.pool.get_conn();
         if conn_wrapped.is_err() {
-            eprintln!("An error occurred: {:?}", conn_wrapped.err().unwrap());
+            eprintln!("An error occurred (appdata.rs): {:?}", conn_wrapped.err().unwrap());
             return Err(());
         }
         let mut conn = conn_wrapped.unwrap();
@@ -222,7 +222,7 @@ impl Database {
         });
 
         if sql_fetch_tables_wrapped.is_err() {
-            eprintln!("An error occurred: {:?}", sql_fetch_tables_wrapped.unwrap());
+            eprintln!("An error occurred (appdata.rs): {:?}", sql_fetch_tables_wrapped.unwrap());
             return Err(());
         }
 
@@ -250,7 +250,7 @@ impl Database {
         //Create a connection
         let conn_wrapped = self.pool.get_conn();
         if conn_wrapped.is_err() {
-            eprintln!("An error occurred: {:?}", conn_wrapped.err().unwrap());
+            eprintln!("An error occurred (appdata.rs): {:?}", conn_wrapped.err().unwrap());
             return Err(());
         }
         let mut conn = conn_wrapped.unwrap();
@@ -259,7 +259,7 @@ impl Database {
         let sql_create_sessions_table = conn.query::<usize, &str>(format!("CREATE TABLE `{}`.`sessions` ( `session_id` VARCHAR(64) NOT NULL , `user_id` VARCHAR(64) NOT NULL , `expiry` BIGINT NOT NULL , PRIMARY KEY (`session_id`)) ENGINE = InnoDB;", environment.mysql_database.clone()).as_str());
 
         if sql_create_sessions_table.is_err() {
-            eprintln!("An error occurred: {:?}", sql_create_sessions_table.err().unwrap());
+            eprintln!("An error occurred (appdata.rs): {:?}", sql_create_sessions_table.err().unwrap());
             return Err(());
         }
         println!("Created table 'sessions'");
@@ -268,7 +268,7 @@ impl Database {
         let sql_create_users_table = conn.query::<usize, &str>(format!("CREATE TABLE `{}`.`users` ( `user_id` VARCHAR(64) NOT NULL , `email` VARCHAR(255) NOT NULL , `password` VARCHAR(255) NOT NULL , `salt` VARCHAR(16) NOT NULL , PRIMARY KEY (`user_id`)) ENGINE = InnoDB;", environment.mysql_database.clone()).as_str());
 
         if sql_create_users_table.is_err() {
-            eprintln!("An error occurred: {:?}", sql_create_users_table.err().unwrap());
+            eprintln!("An error occurred (appdata.rs): {:?}", sql_create_users_table.err().unwrap());
             return Err(());
         }
         println!("Created table 'users'.");
