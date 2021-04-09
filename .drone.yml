@@ -25,9 +25,6 @@ steps:
 triggers:
   event:
   - tag
-  ref:
+  branch:
     exclude:
-    - refs/heads/*
-  exclude:
-  - push
-  
+    - *
