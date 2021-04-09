@@ -31,3 +31,6 @@ triggers:
   branch:
     exclude:
     - '*'
+  ref:
+    exclude:
+    - ref/heads/*
