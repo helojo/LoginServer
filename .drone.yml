@@ -4,8 +4,12 @@ name: TwinsightContentDashboard-API
 service_account: drone-runner
 
 triggers:
+  branch:
+    exclude:
+    - '*'
   event:
-  - tag
+    include:
+      - 'tag'
 
 steps:
 - name: Build Docker image
