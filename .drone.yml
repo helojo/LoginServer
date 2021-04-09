@@ -24,7 +24,10 @@ steps:
 
 triggers:
   event:
-  - tag
+    include:
+    - tag
+    exclude:
+    - push
   branch:
     exclude:
     - '*'
