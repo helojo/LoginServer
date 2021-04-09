@@ -27,4 +27,4 @@ triggers:
   - tag
   branch:
     exclude:
-    - *
+    - '*'
