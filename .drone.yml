@@ -3,19 +3,10 @@ type: kubernetes
 name: TwinsightContentDashboard-API
 service_account: drone-runner
 
-triggers:
+trigger:
   event:
-    include:
-    - tag
-    exclude:
-    - push
-  branch:
-    exclude:
-    - '*'
-  ref:
-    exclude:
-    - ref/heads/*
-
+  - tag
+  
 steps:
 - name: Build Docker image
   image: plugins/docker
