@@ -3,10 +3,6 @@ type: kubernetes
 name: TwinsightContentDashboard-API
 service_account: drone-runner
 
-triggers:
-  event:
-  - tag
-
 steps:
 - name: Build Docker image
   image: plugins/docker
@@ -25,3 +21,9 @@ steps:
     username: Drone CI/CD - TwinsightContentDashboard API
   when:
     status: [ success, failure ]
+
+triggers:
+  event:
+  - tag
+  ref:
+  - refs/tags/*
