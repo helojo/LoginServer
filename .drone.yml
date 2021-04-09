@@ -28,4 +28,6 @@ triggers:
   ref:
     exclude:
     - refs/heads/*
+  exclude:
+  - push
   
