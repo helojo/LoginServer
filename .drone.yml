@@ -26,4 +26,6 @@ triggers:
   event:
   - tag
   ref:
-  - refs/tags/*
+    exclude:
+    - refs/heads/*
+  
