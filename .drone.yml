@@ -3,19 +3,10 @@ type: kubernetes
 name: twinsight-login-server
 service_account: drone-runner
 
-triggers:
+trigger:
   event:
-    include:
-    - tag
-    exclude:
-    - push
-  branch:
-    exclude:
-    - '*'
-  ref:
-    exclude:
-    - ref/heads/*
-
+  - tag
+  
 steps:
 - name: Build Docker image
   image: plugins/docker
@@ -34,3 +25,4 @@ steps:
     username: Drone CI/CD - twinsight-login-server
   when:
     status: [ failure ]
+
