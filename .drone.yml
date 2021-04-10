@@ -1,6 +1,6 @@
 kind: pipeline
 type: kubernetes
-name: TwinsightContentDashboard-API
+name: twinsight-login-server
 service_account: drone-runner
 
 triggers:
@@ -20,7 +20,7 @@ steps:
 - name: Build Docker image
   image: plugins/docker
   settings:
-    repo: registry.thedutchmc.nl/twinsight-content-dashboard-api
+    repo: registry.thedutchmc.nl/twinsight-login-server
     tags:
     - latest
     - ${DRONE_TAG}
@@ -31,6 +31,6 @@ steps:
   settings:
     webhook:
       from_secret: discord_webhook
-    username: Drone CI/CD - TwinsightContentDashboard API
+    username: Drone CI/CD - twinsight-login-server
   when:
-    status: [ success, failure ]
+    status: [ failure ]

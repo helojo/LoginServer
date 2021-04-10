@@ -60,8 +60,8 @@ impl Environment {
         //Linux/Freebsd:    /etc/twinsight-content-dashboard/config.yml
         //Default:          The same directory as the executable
         let config_path = match std::env::consts::OS {
-            "windows" => PathBuf::from(r"C:\Program Files\TwinsightContentDasboard\config.yml"),
-            "linux" | "freebsd" => PathBuf::from(r"/etc/twinsight-content-dashboard"),
+            "windows" => PathBuf::from(r"C:\Program Files\TwinSight Login Server\config.yml"),
+            "linux" | "freebsd" => PathBuf::from(r"/etc/twinsight-login-server"),
             _ => {
                 eprintln!("Warning! This platform is not officially supported. Your configuration file will be placed in the same directory as where the application's executable is located.");
                 let curr_exe_path = std::env::current_exe();

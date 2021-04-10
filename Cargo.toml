@@ -1,5 +1,5 @@
 [package]
-name = "twinsight_content_dashboard"
+name = "login_server"
 version = "0.1.0"
 authors = ["Tobias de Bruijn <github@thedutchmc.nl>"]
 edition = "2018"
