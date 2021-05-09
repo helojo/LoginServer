@@ -11,11 +11,11 @@ steps:
 - name: Build Docker image
   image: plugins/docker
   settings:
-    repo: registry.thedutchmc.nl/twinsight-login-server
+    repo: docker-registry.k8s.array21.dev/twinsight-login-server
     tags:
     - latest
     - ${DRONE_TAG}
-    registry: registry.thedutchmc.nl
+    registry: docker-registry.k8s.array21.dev
 
 - name: Slack notifications
   image: plugins/slack
