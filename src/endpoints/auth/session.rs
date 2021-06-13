@@ -14,7 +14,8 @@ pub struct SessionRequest {
 pub struct SessionResponse {
     status:         i16,
     user_id:        Option<String>,
-    email:          Option<String>
+    email:          Option<String>,
+    message:        Option<&'static str>
 }
 
 #[post("/auth/session")]
@@ -39,7 +40,7 @@ pub async fn post_session(data: web::Data<AppData>, form: web::Form<SessionReque
 
     let sql_verify_session_id = sql_verify_session_id_wrapped.unwrap();
     if sql_verify_session_id.len() == 0 {
-        let response = SessionResponse { status: 401, user_id: None, email: None };
+        let response = SessionResponse { status: 401, user_id: None, email: None, message: Some("Session ID not found.") };
         return HttpResponse::Ok().json(&response);
     }
 
@@ -53,7 +54,7 @@ pub async fn post_session(data: web::Data<AppData>, form: web::Form<SessionReque
 
     //Verify the expiry
     if chrono::Utc::now().timestamp() >= expiry {
-        let response = SessionResponse { status: 401, user_id: None, email: None };
+        let response = SessionResponse { status: 401, user_id: None, email: None, message: Some("Session expired") };
         return HttpResponse::Ok().json(&response);
     }
 
@@ -75,6 +76,6 @@ pub async fn post_session(data: web::Data<AppData>, form: web::Form<SessionReque
         email
     };
 
-    let response = SessionResponse { status: 200, user_id: Some(user_id), email: Some(email) };
+    let response = SessionResponse { status: 200, user_id: Some(user_id), email: Some(email), message: None };
     HttpResponse::Ok().json(&response)
 }
